@@ -1,0 +1,26 @@
+﻿@page "/"
+@using ClassLibraryTransformImageToAsciiArt;
+@using Microsoft.AspNetCore.Components.Forms
+
+@inject IConvertImageToAsciiArt ConvertImageToAsciiArt
+@inject IJSRuntime jsRuntime
+
+<div class="container">
+    <h1>Transform Images To Ascii Art</h1>
+    <InputFile OnChange="@OnInputFileChange" />
+</div>
+
+@code {
+    private long maxFileSize = 1024L * 1024L * 10L; //10 Mb
+
+    private async Task OnInputFileChange(InputFileChangeEventArgs e)
+    {
+        MemoryStream imageStream = new MemoryStream();
+        await e.File.OpenReadStream(maxAllowedSize: maxFileSize).CopyToAsync(imageStream);
+        MemoryStream textFileStream = ConvertImageToAsciiArt.ConvertImageToAsciiArtStream(imageStream);
+        // download the file
+        byte[] data = textFileStream.ToArray();
+        string fileName = e.File.Name + ".txt";
+        await jsRuntime.InvokeAsync<object>("downloadFile", fileName, data);
+    }
+}
